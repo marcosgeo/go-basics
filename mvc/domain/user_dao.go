@@ -2,6 +2,9 @@ package domain
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/marcosgeo/go-basics/mvc/utils"
 )
 
 var (
@@ -10,10 +13,14 @@ var (
 	}
 )
 
-func GetUser(userId int64) (*User, error) {
+func GetUser(userId int64) (*User, *utils.ApplicationError) {
 	user := users[userId]
 	if user == nil {
-		return nil, fmt.Errorf("User %v was not found", userId)
+		return nil, &utils.ApplicationError{
+			Message:    fmt.Sprintf("User %v was not found", userId),
+			StatusCode: http.StatusNotFound,
+			Code:       "not_found",
+		}
 	}
 	return user, nil
 }
