@@ -5,6 +5,9 @@ main
 *.dll
 *.so
 *.dylib
+go.mod
+go.sum
+.idea
 
 # Test binary, built with `go test -c`
 *.test
