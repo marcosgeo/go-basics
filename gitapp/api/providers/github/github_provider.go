@@ -26,7 +26,7 @@ func CreateRepo(
 
 	response, err := restclient.Post(urlCreateRepo, request, headers)
 	if err != nil {
-		log.Println("Error when trying to create new repo in github: %s", err.Error())
+		log.Printf("Error when trying to create new repo in github: %v", err.Error())
 		return nil, &github.ErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message: err.Error(),
@@ -50,8 +50,17 @@ func CreateRepo(
 				Message: "Invalid json response body",
 			}
 		}
-		errResponse.StatuCode = response.StatusCode
+		errResponse.StatusCode = response.StatusCode
 		return nil, &errResponse
 	}
-	return &github.CreateRepoResponse{}, nil
+
+	var result github.CreateRepoResponse
+	if err := json.Unmarshal(bytes, &result); err != nil {
+		log.Printf("Error when trying to unmarshal create repo response: %s", err.Error())
+		return nil, &github.ErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message: "error when trying to unmarshal github create repo response",
+		}
+	}
+	return &result, nil
 }
