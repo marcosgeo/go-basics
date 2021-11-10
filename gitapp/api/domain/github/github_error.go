@@ -4,6 +4,7 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 	DocumentationUrl string `json:"documentation_url"`
 	Errors []Error `json:"errors"`
+	StatusCode int `json:"status_code"`
 }
 
 type Error struct {
