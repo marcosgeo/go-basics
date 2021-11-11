@@ -1,15 +1,15 @@
 package github
 
 type ErrorResponse struct {
-	Message string `json:"message"`
-	DocumentationUrl string `json:"documentation_url"`
-	Errors []Error `json:"errors"`
-	StatusCode int `json:"status_code"`
+	StatusCode       int           `json:"status_code"`
+	Message          string        `json:"message"`
+	DocumentationUrl string        `json:"documentation_url"`
+	Errors           []GithubError `json:"errors"`
 }
 
-type Error struct {
+type GithubError struct {
 	Resource string `json:"resource"`
-	Code string `json:"code"`
-	Field string `json:"field"`
-	Message string `json:"message"`
+	Code     string `json:"code"`
+	Field    string `json:"field"`
+	Message  string `json:"message"`
 }
