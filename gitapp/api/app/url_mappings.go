@@ -6,6 +6,6 @@ import (
 )
 
 func mapUrls() {
-	router.GET("/marco", polo.Polo) // liveliness probe
+	router.GET("/marco", polo.Marco) // liveliness probe
 	router.POST("/repositories", repositories.CreateRepo)
 }
