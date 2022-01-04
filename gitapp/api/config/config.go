@@ -2,8 +2,11 @@ package config
 
 import "os"
 
-const(
+const (
 	secretGithubAccessToken = "SECRET_GITHUB_ACCESS_TOKEN"
+	LogLevel                = "info"
+	goEnvironment           = "GO_ENVIRIONMENT"
+	production              = "productions"
 )
 
 var (
@@ -12,4 +15,8 @@ var (
 
 func GetGithubAccessToken() string {
 	return githubAccessToken
+}
+
+func IsProduction() bool {
+	return os.Getenv(goEnvironment) == production
 }
