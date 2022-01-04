@@ -1,9 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"github.com/marcosgeo/go-basics/gitapp/api/config"
 	"github.com/marcosgeo/go-basics/gitapp/api/domain/github"
 	"github.com/marcosgeo/go-basics/gitapp/api/domain/repositories"
+	"github.com/marcosgeo/go-basics/gitapp/api/log"
 	github_provider "github.com/marcosgeo/go-basics/gitapp/api/providers/github"
 	"github.com/marcosgeo/go-basics/gitapp/api/utils/errors"
 	"net/http"
@@ -13,8 +15,10 @@ import (
 type repoService struct{}
 
 type repoServiceInterface interface {
-	CreateRepo(request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError)
-	CreateRepos(request []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.ApiError)
+	CreateRepo(clientId string, request repositories.CreateRepoRequest) (*repositories.CreateRepoResponse,
+		errors.ApiError)
+	CreateRepos(clientId string, request []repositories.CreateRepoRequest) (repositories.CreateReposResponse,
+		errors.ApiError)
 }
 
 var (
@@ -25,7 +29,8 @@ func init() {
 	RepositoryService = &repoService{}
 }
 
-func (s *repoService) CreateRepo(input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.ApiError) {
+func (s *repoService) CreateRepo(clientId string, input repositories.CreateRepoRequest) (*repositories.
+	CreateRepoResponse, errors.ApiError) {
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
@@ -36,10 +41,13 @@ func (s *repoService) CreateRepo(input repositories.CreateRepoRequest) (*reposit
 		Private:     false,
 	}
 
+	log.Info("About tho send request to external api", fmt.Sprint("client_id:%s", clientId), "status:pending")
 	response, err := github_provider.CreateRepo(config.GetGithubAccessToken(), request)
 	if err != nil {
+		log.Error("Response obtained from external api", err, fmt.Sprintf("client_id:%s", clientId), "status:error")
 		return nil, errors.NewApiError(err.StatusCode, err.Message)
 	}
+	log.Info("Response obtained from external api", fmt.Sprintf("client_id:%s", clientId), "status:success")
 
 	result := repositories.CreateRepoResponse{
 		Id:    response.Id,
@@ -49,7 +57,8 @@ func (s *repoService) CreateRepo(input repositories.CreateRepoRequest) (*reposit
 	return &result, nil
 }
 
-func (s *repoService) CreateRepos(requests []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.ApiError) {
+func (s *repoService) CreateRepos(clientId string, requests []repositories.CreateRepoRequest) (repositories.
+	CreateReposResponse, errors.ApiError) {
 	input := make(chan repositories.CreateRepositoriesResult)
 	output := make(chan repositories.CreateReposResponse)
 	defer close(output)
@@ -60,7 +69,7 @@ func (s *repoService) CreateRepos(requests []repositories.CreateRepoRequest) (re
 	// 3 requests to process
 	for _, current := range requests {
 		wg.Add(1)
-		go s.createRepoConcurrent(current, input)
+		go s.createRepoConcurrent(clientId, current, input)
 	}
 
 	wg.Wait()
@@ -98,13 +107,14 @@ func (s *repoService) handleRepoResults(wg *sync.WaitGroup, input chan repositor
 	output <- results
 }
 
-func (s *repoService) createRepoConcurrent(input repositories.CreateRepoRequest, output chan repositories.CreateRepositoriesResult) {
+func (s *repoService) createRepoConcurrent(clientId string, input repositories.CreateRepoRequest,
+	output chan repositories.CreateRepositoriesResult) {
 	if err := input.Validate(); err != nil {
 		output <- repositories.CreateRepositoriesResult{Error: err}
 		return
 	}
 
-	result, err := s.CreateRepo(input)
+	result, err := s.CreateRepo(clientId, input)
 	if err != nil {
 		output <- repositories.CreateRepositoriesResult{Error: err}
 		return
